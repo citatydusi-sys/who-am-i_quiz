@@ -26,7 +26,13 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-y@)!7n5r^xu*_&_9+jqkc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get('ALLOWED_HOSTS') else ['*']
+# ALLOWED_HOSTS для production
+ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS')
+if ALLOWED_HOSTS_ENV:
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
+else:
+    # Для разработки разрешаем все хосты, для production нужно указать конкретный домен
+    ALLOWED_HOSTS = ['*'] if DEBUG else ['who-am-i-quiz.onrender.com', '127.0.0.1', 'localhost']
 
 
 # Application definition
