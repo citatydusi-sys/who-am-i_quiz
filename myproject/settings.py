@@ -27,12 +27,15 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-y@)!7n5r^xu*_&_9+jqkc
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 # ALLOWED_HOSTS для production
-ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS')
-if ALLOWED_HOSTS_ENV:
-    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
+# Render автоматически устанавливает RENDER_EXTERNAL_HOSTNAME
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS = [RENDER_EXTERNAL_HOSTNAME, 'who-am-i-quiz.onrender.com']
+elif os.environ.get('ALLOWED_HOSTS'):
+    ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS').split(',') if host.strip()]
 else:
-    # Для разработки разрешаем все хосты, для production нужно указать конкретный домен
-    ALLOWED_HOSTS = ['*'] if DEBUG else ['who-am-i-quiz.onrender.com', '127.0.0.1', 'localhost']
+    # Для разработки разрешаем все хосты
+    ALLOWED_HOSTS = ['*'] if DEBUG else ['who-am-i-quiz.onrender.com', '127.0.0.1', 'localhost', '.onrender.com']
 
 
 # Application definition
@@ -57,6 +60,15 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Настройки безопасности для production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = False  # Render обрабатывает SSL сам
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
 
 ROOT_URLCONF = 'myproject.urls'
 
