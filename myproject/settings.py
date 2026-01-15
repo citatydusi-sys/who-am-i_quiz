@@ -29,13 +29,28 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 # ALLOWED_HOSTS для production
 # Render автоматически устанавливает RENDER_EXTERNAL_HOSTNAME
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+ALLOWED_HOSTS = []
+
 if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS = [RENDER_EXTERNAL_HOSTNAME, 'who-am-i-quiz.onrender.com']
-elif os.environ.get('ALLOWED_HOSTS'):
-    ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS').split(',') if host.strip()]
-else:
-    # Для разработки разрешаем все хосты
-    ALLOWED_HOSTS = ['*'] if DEBUG else ['who-am-i-quiz.onrender.com', '127.0.0.1', 'localhost', '.onrender.com']
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# Добавляем домен из переменной окружения если указан
+if os.environ.get('ALLOWED_HOSTS'):
+    hosts = [host.strip() for host in os.environ.get('ALLOWED_HOSTS').split(',') if host.strip()]
+    ALLOWED_HOSTS.extend(hosts)
+
+# Если ничего не указано, используем значения по умолчанию
+if not ALLOWED_HOSTS:
+    if DEBUG:
+        ALLOWED_HOSTS = ['*']  # Для разработки разрешаем все
+    else:
+        # Для production добавляем стандартные хосты Render
+        ALLOWED_HOSTS = [
+            'who-am-i-quiz.onrender.com',
+            '.onrender.com',  # Поддержка всех поддоменов Render
+            '127.0.0.1',
+            'localhost'
+        ]
 
 
 # Application definition
