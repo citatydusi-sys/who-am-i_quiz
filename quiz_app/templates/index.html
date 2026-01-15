@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Выберите уровень - English Quiz{% endblock %}
+
+{% block extra_css %}
+<style>
+    .levels-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-top: 20px;
+    }
+
+    .level-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: block;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .level-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .level-card:hover::before {
+        opacity: 1;
+    }
+
+    .level-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .level-card:nth-child(1) {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .level-card:nth-child(2) {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .level-card:nth-child(3) {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .level-card:nth-child(4) {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    .level-card:nth-child(5) {
+        background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+    }
+
+    .level-card:nth-child(6) {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        color: #333;
+    }
+
+    .level-name {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .level-description {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 15px;
+    }
+
+    .level-categories {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-top: 15px;
+        margin-bottom: 15px;
+        line-height: 1.8;
+        font-weight: 600;
+    }
+
+    .level-categories span {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.25);
+        padding: 8px 16px;
+        border-radius: 15px;
+        margin: 5px;
+        backdrop-filter: blur(10px);
+        font-size: 1.1rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+
+    .empty-state-icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    .empty-state h2 {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+
+    @media (max-width: 768px) {
+        .levels-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .level-card {
+            padding: 25px;
+        }
+
+        .level-name {
+            font-size: 1.5rem;
+        }
+
+        .level-categories {
+            font-size: 1rem;
+        }
+
+        .level-categories span {
+            font-size: 0.95rem;
+            padding: 6px 12px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="text-align: center; margin-bottom: 30px; color: #333; font-size: 2rem;">
+        🎯 Выберите уровень сложности
+    </h2>
+    
+    {% if levels_data %}
+    <div class="levels-grid">
+        {% for item in levels_data %}
+        <a href="{% url 'quiz' item.level.id %}" class="level-card">
+            <div class="level-name">{{ item.level_name_short }}</div>
+            {% if item.categories %}
+            <div class="level-categories">
+                {% for cat in item.categories %}
+                <span>{{ cat }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="level-description">Начать квиз</div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📭</div>
+        <h2>Уровни пока не добавлены</h2>
+        <p>Обратитесь к администратору для добавления уровней</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

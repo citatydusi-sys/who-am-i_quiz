@@ -1,0 +1,700 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ level.name }} - Quiz{% endblock %}
+
+{% block extra_css %}
+    <style>
+    .quiz-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .quiz-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 3px solid #f0f0f0;
+    }
+
+    .quiz-header h1 {
+        color: #333;
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+
+    .progress-bar-container {
+        width: 100%;
+        height: 8px;
+        background: #e0e0e0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 20px;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        transition: width 0.5s ease;
+        width: 0%;
+    }
+
+    .question-counter {
+        color: #666;
+        font-size: 1rem;
+        margin-top: 10px;
+    }
+
+    .question-group {
+        animation: slideIn 0.4s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .question-text {
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .question-word {
+        color: #667eea;
+        font-size: 2.5rem;
+        display: inline-block;
+        margin: 0 10px;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+    }
+
+    .options-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin-top: 30px;
+    }
+
+    .option-btn {
+        padding: 20px 30px;
+        font-size: 1.2rem;
+        border: 3px solid #e0e0e0;
+        background: white;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        text-align: left;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .option-btn::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        transition: width 0.3s ease;
+    }
+
+    .option-btn:hover:not(:disabled) {
+        border-color: #667eea;
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+    }
+
+    .option-btn:hover:not(:disabled)::before {
+        width: 100%;
+    }
+
+    .option-btn:disabled {
+        cursor: not-allowed;
+    }
+
+    .option-btn.correct {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        color: white;
+        border-color: #2ecc71;
+        animation: correctPulse 0.5s ease;
+    }
+
+    .option-btn.selected {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+
+    .option-btn.wrong {
+        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        color: white;
+        border-color: #e74c3c;
+    }
+
+    .option-btn.correct {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        color: white;
+        border-color: #2ecc71;
+    }
+
+    .navigation-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+        gap: 15px;
+    }
+
+    .btn-next, .btn-finish {
+        flex: 1;
+        padding: 15px 30px;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+
+    .btn-next {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-next:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-next:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .btn-finish {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        color: white;
+    }
+
+    .btn-finish:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4);
+    }
+
+    .review-container {
+        margin-top: 30px;
+    }
+
+    .review-item {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-left: 5px solid #667eea;
+    }
+
+    .review-item.correct-answer {
+        border-left-color: #2ecc71;
+    }
+
+    .review-item.wrong-answer {
+        border-left-color: #e74c3c;
+    }
+
+    .review-question {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    .review-word {
+        color: #667eea;
+        font-weight: 700;
+    }
+
+    .review-answers {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .review-answer {
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+
+    .review-answer.user-answer {
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+    }
+
+    .review-answer.correct-answer {
+        background: #d4edda;
+        border: 2px solid #2ecc71;
+        font-weight: 600;
+    }
+
+    .review-answer.wrong-answer {
+        background: #f8d7da;
+        border: 2px solid #e74c3c;
+    }
+
+    .result-container {
+        text-align: center;
+        padding: 40px;
+        animation: fadeInScale 0.5s ease-out;
+    }
+
+    @keyframes fadeInScale {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .result-icon {
+        font-size: 5rem;
+        margin-bottom: 20px;
+    }
+
+    .result-title {
+        font-size: 2.5rem;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .score-display {
+        font-size: 4rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 20px 0;
+    }
+
+    .score-percentage {
+        font-size: 1.5rem;
+        color: #666;
+        margin-bottom: 30px;
+    }
+
+    .result-message {
+        font-size: 1.3rem;
+        color: #666;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .question-text {
+            font-size: 1.5rem;
+        }
+
+        .question-word {
+            font-size: 2rem;
+        }
+
+        .option-btn {
+            padding: 15px 20px;
+            font-size: 1rem;
+        }
+
+        .score-display {
+            font-size: 3rem;
+        }
+    }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="quiz-container">
+    <div class="card">
+        <div class="quiz-header">
+        <h1>{{ level.name }}</h1>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div class="question-counter" id="question-counter">Вопрос 1 из {{ quiz_data|length }}</div>
+        </div>
+
+        <div id="quiz-box">
+            {% for item in quiz_data %}
+            <div class="question-group" id="question-group-{{ forloop.counter0 }}" style="{% if not forloop.first %}display:none{% endif %}" data-correct="{{ item.a|escapejs }}" data-question="{{ item.q|escapejs }}" data-question-index="{{ forloop.counter0 }}">
+                <div class="question-text">
+                    Переведите слово: <span class="question-word">{{ item.q }}</span>
+                </div>
+                <div class="options-container">
+                {% for o in item.opts %}
+                    <button class="option-btn" data-option-value="{{ o|escapejs }}" onclick="selectAnswer(this)">
+                        {{ o }}
+                    </button>
+                {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div id="result" class="hidden">
+            <div class="result-container">
+                <div class="result-icon" id="result-icon">🎉</div>
+                <h2 class="result-title">Квиз завершен!</h2>
+                <div class="score-display" id="score-text">0 / {{ quiz_data|length }}</div>
+                <div class="score-percentage" id="score-percentage"></div>
+                <div class="result-message" id="result-message"></div>
+                
+                <div class="review-container" id="review-container"></div>
+                
+                <div class="action-buttons">
+                    <a href="{% url 'index' %}" class="btn btn-primary">🏠 На главную</a>
+                    <button class="btn btn-secondary" onclick="location.reload()">🔄 Пройти снова</button>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+    let currentQuestion = 0;
+    // Получаем количество вопросов из шаблона
+    const totalQuestions = parseInt('{{ quiz_data|length }}') || 0;
+    let userAnswers = {}; // Хранит ответы пользователя: {questionIndex: selectedAnswer}
+    
+    // Отладочная информация
+    console.log('=== QUIZ INITIALIZATION ===');
+    console.log('Total questions (from template):', totalQuestions);
+    console.log('Quiz data length (raw):', '{{ quiz_data|length }}');
+    
+    // Проверяем, что вопросы загружены
+    if (totalQuestions === 0) {
+        console.error('ERROR: No questions found!');
+        alert('Ошибка: Вопросы не загружены. Пожалуйста, обновите страницу.');
+    }
+    
+    // Проверяем, что все группы вопросов созданы
+    document.addEventListener('DOMContentLoaded', function() {
+        const allGroups = document.querySelectorAll('.question-group');
+        console.log('Found question groups:', allGroups.length);
+        allGroups.forEach((group, idx) => {
+            const display = window.getComputedStyle(group).display;
+            const questionIndex = group.dataset.questionIndex || group.getAttribute('data-question-index');
+            console.log(`  Group ${idx}: id="${group.id}" display="${display}" data-index="${questionIndex}"`);
+        });
+        
+        // Разблокируем кнопки первого вопроса
+        const firstGroup = document.getElementById('question-group-0');
+        if (firstGroup) {
+            const firstOptions = firstGroup.querySelectorAll('.option-btn');
+            firstOptions.forEach(opt => opt.disabled = false);
+            console.log('✓ First question buttons unlocked');
+        } else {
+            console.error('✗ First question group not found!');
+        }
+        
+        console.log('=== INITIALIZATION COMPLETE ===');
+    });
+
+    function updateProgress() {
+        const progress = ((currentQuestion + 1) / totalQuestions) * 100;
+        document.getElementById('progress-bar').style.width = progress + '%';
+        document.getElementById('question-counter').textContent = 
+            `Вопрос ${currentQuestion + 1} из ${totalQuestions}`;
+    }
+
+    function selectAnswer(btn) {
+        // Получаем индекс вопроса из data-атрибута группы
+        const questionGroup = btn.closest('.question-group');
+        if (!questionGroup) {
+            console.error('Question group not found!');
+            return;
+        }
+        
+        // Получаем индекс вопроса из data-атрибута (используем dataset для удобства)
+        const questionIndex = parseInt(questionGroup.dataset.questionIndex || questionGroup.getAttribute('data-question-index'));
+        
+        if (isNaN(questionIndex)) {
+            console.error('Invalid question index!', questionGroup.getAttribute('data-question-index'));
+            console.error('Question group ID:', questionGroup.id);
+            return;
+        }
+        
+        console.log('=== selectAnswer called ===');
+        console.log('questionIndex from data-attribute:', questionIndex);
+        console.log('Question group ID:', questionGroup.id);
+        
+        const options = questionGroup.querySelectorAll('.option-btn');
+        
+        // Проверяем, не заблокированы ли уже кнопки
+        if (options.length > 0 && options[0].disabled) {
+            console.log('Buttons already disabled, ignoring click');
+            return;
+        }
+        
+        // Блокируем все кнопки в этом вопросе
+        options.forEach(opt => {
+            opt.disabled = true;
+        });
+
+        // Убираем выделение с других кнопок
+        options.forEach(opt => {
+            opt.classList.remove('selected');
+        });
+
+        // Выделяем выбранную кнопку
+        btn.classList.add('selected');
+        
+        // Сохраняем ответ пользователя (используем innerText для надежности)
+        const selectedAnswer = btn.innerText.trim();
+        userAnswers[questionIndex] = selectedAnswer;
+        
+        console.log('Answer selected for question', questionIndex, ':', selectedAnswer);
+        console.log('Total questions:', totalQuestions, 'Current index:', questionIndex);
+
+        // Автоматически переходим к следующему вопросу через небольшую задержку
+            setTimeout(() => {
+            // Проверяем, не последний ли это вопрос
+            // questionIndex начинается с 0, последний вопрос = totalQuestions - 1
+            // Например: если totalQuestions = 34, то индексы 0-33, последний = 33
+            
+            console.log('=== TIMEOUT TRIGGERED ===');
+            console.log('questionIndex:', questionIndex);
+            console.log('totalQuestions:', totalQuestions);
+            console.log('Last question index would be:', totalQuestions - 1);
+            
+            const isLastQuestion = (questionIndex === totalQuestions - 1);
+            
+            console.log('Is last question?', isLastQuestion);
+            
+            if (isLastQuestion) {
+                // Это был последний вопрос - завершаем тест
+                console.log('>>> LAST QUESTION - FINISHING QUIZ <<<');
+                finishQuiz();
+            } else {
+                // Есть еще вопросы - переходим к следующему
+                console.log('>>> MOVING TO NEXT QUESTION <<<');
+                nextQuestion(questionIndex);
+            }
+        }, 800); // Задержка 800мс, чтобы пользователь видел свой выбор
+    }
+
+    function nextQuestion(currentIndex) {
+        // Вычисляем индекс следующего вопроса
+        const nextIndex = currentIndex + 1;
+        
+        console.log('=== nextQuestion called ===');
+        console.log('currentIndex:', currentIndex);
+        console.log('nextIndex:', nextIndex);
+        console.log('totalQuestions:', totalQuestions);
+        
+        // Проверяем, есть ли еще вопросы
+        if (nextIndex >= totalQuestions) {
+            // Это был последний вопрос - завершаем тест
+            console.log('ERROR: nextIndex >= totalQuestions, finishing quiz');
+            finishQuiz();
+            return;
+        }
+        
+        // Скрываем текущий вопрос
+        const currentGroupId = 'question-group-' + currentIndex;
+        const currentGroup = document.getElementById(currentGroupId);
+        if (currentGroup) {
+            currentGroup.style.display = 'none';
+            console.log('✓ Hiding question group:', currentGroupId);
+        } else {
+            console.error('✗ Current question group not found:', currentGroupId);
+            console.error('Available groups:', Array.from(document.querySelectorAll('.question-group')).map(g => g.id));
+        }
+        
+        // Показываем следующий вопрос
+        currentQuestion = nextIndex;
+        const nextGroupId = 'question-group-' + nextIndex;
+        const nextGroup = document.getElementById(nextGroupId);
+        
+        if (nextGroup) {
+            nextGroup.style.display = 'block';
+            console.log('✓ Showing question group:', nextGroupId);
+            
+            // Разблокируем кнопки в следующем вопросе
+            const nextOptions = nextGroup.querySelectorAll('.option-btn');
+            nextOptions.forEach(opt => {
+                opt.disabled = false;
+                opt.classList.remove('selected');
+            });
+            console.log('✓ Unlocked', nextOptions.length, 'buttons for question', nextIndex);
+        } else {
+            console.error('✗ Next question group not found:', nextGroupId);
+            console.error('Available groups:', Array.from(document.querySelectorAll('.question-group')).map(g => g.id));
+            // Если следующий вопрос не найден, завершаем тест
+            finishQuiz();
+            return;
+        }
+        
+        updateProgress();
+        console.log('=== nextQuestion completed ===');
+    }
+
+    function finishQuiz() {
+        console.log('=== finishQuiz CALLED ===');
+        console.trace('Stack trace:');
+        
+        // Скрываем квиз
+        const quizBox = document.getElementById('quiz-box');
+        if (quizBox) {
+            quizBox.style.display = 'none';
+            console.log('✓ Quiz box hidden');
+        } else {
+            console.error('✗ Quiz box not found!');
+        }
+        
+        // Показываем результаты
+        showResults();
+    }
+
+    function showResults() {
+        // Скрываем заголовок с прогрессом
+        const quizHeader = document.querySelector('.quiz-header');
+        if (quizHeader) {
+            quizHeader.style.display = 'none';
+        }
+        
+        document.getElementById('result').classList.remove('hidden');
+        
+        let score = 0;
+        const reviewContainer = document.getElementById('review-container');
+        reviewContainer.innerHTML = '<h3 style="margin-bottom: 20px; color: #333;">📋 Проверка ответов:</h3>';
+
+        // Проверяем каждый вопрос
+        for (let i = 0; i < totalQuestions; i++) {
+            const questionGroup = document.getElementById('question-group-' + i);
+            if (!questionGroup) {
+                console.error('Question group not found for index:', i);
+                continue;
+            }
+            
+            const correctAnswer = questionGroup.dataset.correct || questionGroup.getAttribute('data-correct');
+            const questionText = questionGroup.dataset.question || questionGroup.getAttribute('data-question');
+            const userAnswer = userAnswers[i] || null;
+
+            // Нормализуем ответы для сравнения (убираем лишние пробелы)
+            const normalizedUserAnswer = userAnswer ? userAnswer.trim() : null;
+            const normalizedCorrectAnswer = correctAnswer ? correctAnswer.trim() : '';
+
+            const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer;
+            if (isCorrect) {
+                score++;
+            }
+
+            // Создаем элемент для отображения результата
+            const reviewItem = document.createElement('div');
+            reviewItem.className = 'review-item ' + (isCorrect ? 'correct-answer' : 'wrong-answer');
+            
+            const reviewQuestion = document.createElement('div');
+            reviewQuestion.className = 'review-question';
+            reviewQuestion.innerHTML = `${i + 1}. Переведите слово: <span class="review-word">${questionText}</span>`;
+            
+            const reviewAnswers = document.createElement('div');
+            reviewAnswers.className = 'review-answers';
+
+            // Показываем ответ пользователя
+            if (userAnswer) {
+                const userAnswerDiv = document.createElement('div');
+                userAnswerDiv.className = 'review-answer user-answer';
+                userAnswerDiv.innerHTML = `Ваш ответ: ${userAnswer}`;
+                reviewAnswers.appendChild(userAnswerDiv);
+            } else {
+                const noAnswerDiv = document.createElement('div');
+                noAnswerDiv.className = 'review-answer user-answer';
+                noAnswerDiv.innerHTML = 'Вы не ответили на этот вопрос';
+                reviewAnswers.appendChild(noAnswerDiv);
+            }
+
+            // Показываем правильный ответ
+            const correctAnswerDiv = document.createElement('div');
+            correctAnswerDiv.className = 'review-answer correct-answer';
+            correctAnswerDiv.innerHTML = `✓ Правильный ответ: ${correctAnswer}`;
+            reviewAnswers.appendChild(correctAnswerDiv);
+
+            reviewItem.appendChild(reviewQuestion);
+            reviewItem.appendChild(reviewAnswers);
+            reviewContainer.appendChild(reviewItem);
+        }
+
+        // Показываем общий результат
+        const percentage = Math.round((score / totalQuestions) * 100);
+        document.getElementById('score-text').textContent = `${score} / ${totalQuestions}`;
+        document.getElementById('score-percentage').textContent = `${percentage}% правильных ответов`;
+
+        // Устанавливаем иконку и сообщение в зависимости от результата
+        const resultIcon = document.getElementById('result-icon');
+        const resultMessage = document.getElementById('result-message');
+        
+        if (percentage === 100) {
+            resultIcon.textContent = '🏆';
+            resultMessage.textContent = 'Превосходно! Вы знаете все слова на этом уровне!';
+            resultMessage.style.background = 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)';
+            resultMessage.style.color = 'white';
+        } else if (percentage >= 80) {
+            resultIcon.textContent = '⭐';
+            resultMessage.textContent = 'Отличный результат! Вы хорошо знаете этот уровень!';
+            resultMessage.style.background = 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)';
+            resultMessage.style.color = 'white';
+        } else if (percentage >= 60) {
+            resultIcon.textContent = '👍';
+            resultMessage.textContent = 'Хороший результат! Продолжайте практиковаться!';
+            resultMessage.style.background = 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)';
+            resultMessage.style.color = 'white';
+        } else {
+            resultIcon.textContent = '📚';
+            resultMessage.textContent = 'Неплохо! Повторите материал и попробуйте снова!';
+            resultMessage.style.background = '#f8f9fa';
+            resultMessage.style.color = '#666';
+        }
+    }
+
+    // Инициализируем прогресс при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        updateProgress();
+        
+        // Убеждаемся, что первый вопрос активен и кнопки разблокированы
+        const firstGroup = document.getElementById('group-0');
+        if (firstGroup) {
+            const firstOptions = firstGroup.querySelectorAll('.option-btn');
+            firstOptions.forEach(opt => {
+                opt.disabled = false;
+            });
+        }
+    });
+    </script>
+{% endblock %}
