@@ -18,8 +18,10 @@
    ```
    SECRET_KEY=your-secret-key-here
    DEBUG=False
-   ALLOWED_HOSTS=your-app-name.onrender.com
+   ALLOWED_HOSTS=who-am-i-quiz.onrender.com
    ```
+   
+   **ВАЖНО:** Замените `who-am-i-quiz.onrender.com` на ваш реальный домен Render!
 
 4. **Генерация SECRET_KEY:**
    Вы можете сгенерировать новый SECRET_KEY командой:
