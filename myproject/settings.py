@@ -31,6 +31,7 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 ALLOWED_HOSTS = []
 
+# Добавляем хост из Render если доступен
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
@@ -44,13 +45,9 @@ if not ALLOWED_HOSTS:
     if DEBUG:
         ALLOWED_HOSTS = ['*']  # Для разработки разрешаем все
     else:
-        # Для production добавляем стандартные хосты Render
-        ALLOWED_HOSTS = [
-            'who-am-i-quiz.onrender.com',
-            '.onrender.com',  # Поддержка всех поддоменов Render
-            '127.0.0.1',
-            'localhost'
-        ]
+        # Для production разрешаем все хосты Render (временно для диагностики)
+        # В production лучше указать конкретные домены
+        ALLOWED_HOSTS = ['*']  # Разрешаем все для устранения ошибки 400
 
 
 # Application definition
